@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bibel</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bibel">
+<meta name="theme-color" content="#000000">
+<style>
+:root{--bg:#ffffff;--ink:#111111;--muted:#6b6b6b;--line:#e3e3e3;--accent:#111111;--mark:#ffe58a;--hl:#fff3cf;--bar:#f4f4f4}
+:root[data-theme="dark"]{--bg:#000000;--ink:#f2f2f2;--muted:#9a9a9a;--line:#2a2a2a;--accent:#f2f2f2;--mark:#6b5a14;--hl:#26210d;--bar:#161616}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(8px + env(safe-area-inset-top)) 12px 8px}
+.bar{display:flex;gap:8px;align-items:center;max-width:760px;margin:0 auto}
+.bar + .bar{margin-top:8px}
+select,button,input{font:inherit;color:var(--ink);background:var(--bar);border:1px solid var(--line);border-radius:999px;padding:9px 14px}
+select{flex:1 1 0;min-width:0;appearance:none;-webkit-appearance:none;text-overflow:ellipsis}
+button{cursor:pointer;flex:0 0 auto}
+button.icon{width:42px;height:42px;padding:0;font-size:18px;display:grid;place-items:center}
+input[type=search]{flex:1 1 auto;min-width:0;border-radius:10px}
+main{max-width:760px;margin:0 auto;padding:16px 18px calc(90px + env(safe-area-inset-bottom))}
+h2{font:700 28px/1.25 Georgia,"Times New Roman",serif;margin:8px 0 14px}
+.text{font:22px/1.75 Georgia,"Times New Roman",serif}
+.text p{margin:0 0 .2em}
+.text .v{padding:1px 0}
+.text .n{font:600 .55em system-ui,sans-serif;color:var(--muted);vertical-align:super;margin-right:.35em}
+.text .v.hl{background:var(--hl);border-radius:4px;box-shadow:-6px 0 0 var(--hl),6px 0 0 var(--hl)}
+.note{display:block;font:14px/1.4 system-ui,sans-serif;color:var(--muted);margin:0 0 .6em 1.1em}
+.warn{border:1px solid var(--line);background:var(--bar);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--muted);margin:0 0 14px}
+mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
+.result{border-bottom:1px solid var(--line);padding:10px 0;cursor:pointer}
+.result .ref{font-weight:650;font-size:15px}
+.result .t{font:19px/1.5 Georgia,serif;margin-top:2px}
+.muted{color:var(--muted)}
+.hidden{display:none!important}
+.pager{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));z-index:9}
+.pager .bar{justify-content:space-between}
+.pager button{flex:1}
+label.sw{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted);flex:0 0 auto}
+</style>
+</head>
+<body>
+<header id="hdr">
+  <div class="bar">
+    <select id="selTr" aria-label="Übersetzung"></select>
+    <button id="btnSearch" class="icon" aria-label="Suche">🔍</button>
+    <button id="btnTheme" class="icon" aria-label="Hell/Dunkel">◐</button>
+  </div>
+  <div class="bar">
+    <select id="selBook" aria-label="Buch"></select>
+    <select id="selChap" aria-label="Kapitel"></select>
+  </div>
+  <div class="bar hidden" id="searchBar">
+    <input id="q" type="search" placeholder="Suchen, z. B. Liebe oder &quot;im Anfang&quot;" autocomplete="off" spellcheck="false">
+    <button id="qBtn">Suchen</button>
+  </div>
+</header>
+<main id="main"></main>
+<input type="file" id="file" accept=".js,.json,text/javascript,application/json" multiple class="hidden">
+<div class="pager" id="pager"><div class="bar"><button id="prev">‹ Zurück</button><label class="sw"><input type="checkbox" id="optNotes"> Anmerkungen</label><button id="next">Weiter ›</button></div></div>
+
+<script src="data/elb.js"></script>
+<script src="data/lut.js"></script>
+<script src="data/elb32.js"></script>
+<script src="data/slt.js"></script>
+<script>
+"use strict";
+var BOOKS=["1. Mose","2. Mose","3. Mose","4. Mose","5. Mose","Josua","Richter","Ruth","1. Samuel","2. Samuel","1. Könige","2. Könige","1. Chronik","2. Chronik","Esra","Nehemia","Ester","Hiob","Psalmen","Sprüche","Prediger","Hohelied","Jesaja","Jeremia","Klagelieder","Hesekiel","Daniel","Hosea","Joel","Amos","Obadja","Jona","Micha","Nahum","Habakuk","Zefanja","Haggai","Sacharja","Maleachi","Matthäus","Markus","Lukas","Johannes","Apostelgeschichte","Römer","1. Korinther","2. Korinther","Galater","Epheser","Philipper","Kolosser","1. Thessalonicher","2. Thessalonicher","1. Timotheus","2. Timotheus","Titus","Philemon","Hebräer","Jakobus","1. Petrus","2. Petrus","1. Johannes","2. Johannes","3. Johannes","Judas","Offenbarung"];
+var ORDER=["slt","elb","elb32","lut"];
+var D=window.BIBLE_DATA=window.BIBLE_DATA||{};
+var avail=[];
+/* Eigene Übersetzungen (Import) liegen nur auf diesem Gerät in IndexedDB */
+function idb(){return new Promise(function(res,rej){var r=indexedDB.open("bibel",1);
+  r.onupgradeneeded=function(){r.result.createObjectStore("tr");};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};});}
+function idbAll(){return idb().then(function(db){return new Promise(function(res){var o={},q=db.transaction("tr").objectStore("tr").openCursor();
+  q.onsuccess=function(){var c=q.result;if(c){o[c.key]=c.value;c.continue();}else res(o);};q.onerror=function(){res(o);};});}).catch(function(){return {};});}
+function idbPut(k,v){return idb().then(function(db){return new Promise(function(res,rej){var t=db.transaction("tr","readwrite");t.objectStore("tr").put(v,k);t.oncomplete=res;t.onerror=function(){rej(t.error);};});});}
+function idbDel(k){return idb().then(function(db){return new Promise(function(res){var t=db.transaction("tr","readwrite");t.objectStore("tr").delete(k);t.oncomplete=res;});});}
+var $=function(id){return document.getElementById(id);};
+var st={tr:avail[0],book:0,chap:1,hl:null,mode:"read"};
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function get(k,d){try{var v=localStorage.getItem(k);return v===null?d:v;}catch(e){return d;}}
+function put(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+
+/* Hell/Dunkel */
+function applyTheme(t){document.documentElement.setAttribute("data-theme",t);
+  var m=document.querySelector('meta[name=theme-color]'); }
+var theme=get("theme", (window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light");
+applyTheme(theme);
+$("btnTheme").onclick=function(){theme=theme==="dark"?"light":"dark";put("theme",theme);applyTheme(theme);};
+
+/* Auswahl */
+var ADD="__add",DEL="__del";
+function trOptions(){
+  $("selTr").innerHTML=avail.map(function(k){return '<option value="'+k+'">'+esc(D[k].name)+'</option>';}).join("")+
+   '<option value="'+ADD+'">＋ Übersetzung hinzufügen …</option>'+(avail.some(function(k){return D[k]._own;})?'<option value="'+DEL+'">－ Importierte entfernen</option>':'');}
+function parseImport(txt){var i=txt.indexOf("={"),st0=i>=0?i+1:txt.indexOf("{"),j=txt.lastIndexOf("}");
+  var o=JSON.parse(txt.slice(st0,j+1));
+  if(!o||!o.id||!o.name||!o.books||o.books.length!==66)throw new Error("Format");return o;}
+$("file").onchange=function(){var fs=[].slice.call(this.files),self=this,n=0;
+  Promise.all(fs.map(function(f){return f.text().then(function(t){var o=parseImport(t);o._own=true;return idbPut(o.id,o).then(function(){D[o.id]=o;n++;});}).catch(function(){});})).then(function(){
+    self.value="";avail=ORDER.filter(function(k){return D[k];}).concat(Object.keys(D).filter(function(k){return ORDER.indexOf(k)<0;}));
+    if(n){st.tr=avail.filter(function(k){return D[k]._own;}).pop();}trOptions();
+    if(n)go(st.book,st.chap,null);else{alert("Datei konnte nicht gelesen werden. Es muss eine Bibel-Datei dieser App sein (z. B. slt.js).");$("selTr").value=st.tr;}});};
+$("selBook").innerHTML=BOOKS.map(function(n,i){return '<option value="'+i+'">'+n+'</option>';}).join("");
+function restore(){var saved=get("pos",""); if(saved){try{var p=JSON.parse(saved);if(D[p.tr])st.tr=p.tr;if(p.book>=0&&p.book<66){st.book=p.book;st.chap=p.chap||1;}}catch(e){}}}
+$("optNotes").checked=get("notes","0")==="1";
+$("optNotes").onchange=function(){put("notes",this.checked?"1":"0");if(st.mode==="read")render(false);};
+
+function chapters(b){return D[st.tr].books[b].length;}
+function fill(){
+  var n=chapters(st.book),h="";
+  for(var i=1;i<=n;i++)h+='<option value="'+i+'">Kapitel '+i+'</option>';
+  $("selChap").innerHTML=h; $("selTr").value=st.tr; $("selBook").value=st.book; $("selChap").value=st.chap;
+}
+function go(b,c,hl){
+  st.book=b;st.chap=Math.min(Math.max(1,c),chapters(b));st.hl=hl||null;st.mode="read";
+  put("pos",JSON.stringify({tr:st.tr,book:st.book,chap:st.chap}));
+  render(true);
+}
+$("selTr").onchange=function(){
+  if(this.value===ADD){this.value=st.tr;$("file").click();return;}
+  if(this.value===DEL){this.value=st.tr;if(!confirm("Alle importierten Übersetzungen von diesem Gerät entfernen?"))return;
+    Promise.all(avail.filter(function(k){return D[k]._own;}).map(function(k){delete D[k];return idbDel(k);})).then(function(){
+      avail=avail.filter(function(k){return D[k];});st.tr=avail[0];trOptions();go(st.book,st.chap,null);});return;}
+  st.tr=this.value;go(st.book,st.chap,null);};
+$("selBook").onchange=function(){go(+this.value,1,null);};
+$("selChap").onchange=function(){go(st.book,+this.value,null);};
+function step(d){var b=st.book,c=st.chap+d;
+  if(c<1){if(b===0)return;b--;c=chapters(b);}
+  else if(c>chapters(b)){if(b===65)return;b++;c=1;}
+  go(b,c,null);}
+$("prev").onclick=function(){step(-1);};
+$("next").onclick=function(){step(1);};
+
+function render(scroll){
+  $("pager").classList.remove("hidden"); fill();
+  var tr=D[st.tr], vs=tr.books[st.book][st.chap-1]||[], notes=$("optNotes").checked;
+  var h='<h2>'+esc(BOOKS[st.book])+' '+st.chap+'</h2>';
+  if(tr.note)h+='<div class="warn">'+esc(tr.note)+'</div>';
+  h+='<div class="text">';
+  vs.forEach(function(v){
+    var hl=st.hl&&v[0]>=st.hl[0]&&v[0]<=st.hl[1];
+    h+='<p class="v'+(hl?" hl":"")+'" id="v'+v[0]+'"><span class="n">'+v[0]+'</span>'+esc(v[1])+'</p>';
+    if(notes&&v[2])h+='<span class="note">'+esc(v[2])+'</span>';
+  });
+  if(!vs.length)h+='<p class="muted">In dieser Übersetzung ist dieses Kapitel nicht vorhanden.</p>';
+  $("main").innerHTML=h+'</div>';
+  if(scroll){var el=st.hl&&$("v"+st.hl[0]);if(el)setTimeout(function(){el.scrollIntoView({block:"center"});},0);else window.scrollTo(0,0);}
+}
+
+/* Suche */
+function fold(s){var o="",m=[];for(var i=0;i<s.length;i++){var c=s[i].toLowerCase(),r=c;
+  if(c==="ä")r="a";else if(c==="ö")r="o";else if(c==="ü")r="u";else if(c==="ß")r="ss";else if(c==="’"||c==="‘"||c==="»"||c==="«")r="";
+  for(var j=0;j<r.length;j++){o+=r[j];m.push(i);}}return {s:o,map:m};}
+var IDX={};
+function indexFor(tr){if(IDX[tr])return IDX[tr];var l=[];
+  D[tr].books.forEach(function(chs,b){chs.forEach(function(vs,c){vs.forEach(function(v){l.push([b,c+1,v[0],v[1],fold(v[1])]);});});});
+  return IDX[tr]=l;}
+function terms(q){var t=[],re=/"([^"]+)"|(\S+)/g,m;while((m=re.exec(q)))t.push(fold(m[1]||m[2]).s);return t.filter(Boolean);}
+function mark(text,f,ts){var sp=[];ts.forEach(function(t){var i=0;while((i=f.s.indexOf(t,i))>=0){sp.push([f.map[i],f.map[i+t.length-1]+1]);i+=t.length;}});
+  sp.sort(function(a,b){return a[0]-b[0];});var o="",p=0;
+  sp.forEach(function(s){if(s[1]<=p)return;var a=Math.max(s[0],p);o+=esc(text.slice(p,a))+"<mark>"+esc(text.slice(a,s[1]))+"</mark>";p=s[1];});
+  return o+esc(text.slice(p));}
+var RES=[],shown=0,TS=[];
+function search(){
+  var q=$("q").value.trim();if(!q)return;TS=terms(q);if(!TS.length)return;
+  RES=indexFor(st.tr).filter(function(r){return TS.every(function(t){return r[4].s.indexOf(t)>=0;});});
+  shown=0;st.mode="search";$("pager").classList.add("hidden");
+  $("main").innerHTML='<h2>Suche: '+esc(q)+'</h2><p class="muted">'+RES.length+' Treffer in '+esc(D[st.tr].name)+'</p><div id="results"></div><p><button id="more" class="hidden">Mehr anzeigen</button></p>';
+  more();$("more").onclick=more;window.scrollTo(0,0);
+}
+function more(){var end=Math.min(RES.length,shown+150),h="";
+  for(var i=shown;i<end;i++){var r=RES[i];h+='<div class="result" data-i="'+i+'"><div class="ref">'+esc(BOOKS[r[0]])+' '+r[1]+','+r[2]+'</div><div class="t">'+mark(r[3],r[4],TS)+'</div></div>';}
+  $("results").insertAdjacentHTML("beforeend",h);shown=end;$("more").classList.toggle("hidden",shown>=RES.length);}
+$("main").addEventListener("click",function(e){var el=e.target.closest&&e.target.closest(".result");if(!el)return;var r=RES[+el.dataset.i];go(r[0],r[1],[r[2],r[2]]);});
+$("btnSearch").onclick=function(){var b=$("searchBar");b.classList.toggle("hidden");if(!b.classList.contains("hidden"))$("q").focus();};
+$("qBtn").onclick=search;$("q").addEventListener("keydown",function(e){if(e.key==="Enter")search();});
+
+idbAll().then(function(o){Object.keys(o).forEach(function(k){if(!D[k])D[k]=o[k];});
+  avail=ORDER.filter(function(k){return D[k];}).concat(Object.keys(D).filter(function(k){return ORDER.indexOf(k)<0;}));
+  if(!avail.length){$("main").innerHTML='<p class="warn">Noch keine Übersetzung. Tippe oben auf die Auswahl und wähle „＋ Übersetzung hinzufügen“.</p>';}
+  st.tr=avail[0];restore();trOptions();if(avail.length)go(st.book,st.chap,null);});
+if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0)navigator.serviceWorker.register("sw.js").catch(function(){});
+</script>
+</body>
+</html>
