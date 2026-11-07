@@ -234,7 +234,7 @@ $("qBtn").onclick=search;$("q").addEventListener("keydown",function(e){if(e.key=
 idbAll().then(function(o){Object.keys(o).forEach(function(k){if(!D[k])D[k]=o[k];});
   avail=mkAvail();
   if(!avail.length){$("main").innerHTML='<p class="warn">Noch keine Übersetzung. Tippe oben auf die Auswahl und wähle „＋ Übersetzung hinzufügen“.</p>';}
-  st.tr=D.slt?"slt":avail[0];restore();trOptions();if(avail.length)go(st.book,st.chap,null);});
+  st.tr=ORDER.filter(function(k){return D[k];})[0]||avail[0];restore();trOptions();if(avail.length)go(st.book,st.chap,null);});
 if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0)navigator.serviceWorker.register("sw.js").catch(function(){});
 </script>
 </body>
