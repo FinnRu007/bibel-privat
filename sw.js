@@ -1,4 +1,4 @@
-var V="bibel-v5";
+var V="bibel-v6";
 var CORE=["./","index.html","manifest.webmanifest","biblia-192.png","biblia-512.png","biblia-180.png","data/lut.js","data/elb32.js"];
 self.addEventListener("install",function(e){e.waitUntil(caches.open(V).then(function(c){return Promise.all(CORE.map(function(u){return c.add(u).catch(function(){});}));}).then(function(){return self.skipWaiting();}));});
 self.addEventListener("activate",function(e){e.waitUntil(caches.keys().then(function(k){return Promise.all(k.filter(function(x){return x!==V;}).map(function(x){return caches.delete(x);}));}).then(function(){return self.clients.claim();}));});

@@ -23,6 +23,7 @@ select,button,input{font:inherit;color:var(--ink);background:var(--bar);border:1
 select{flex:1 1 0;min-width:0;appearance:none;-webkit-appearance:none;text-overflow:ellipsis}
 button{cursor:pointer;flex:0 0 auto}
 button.icon{width:42px;height:42px;padding:0;font-size:18px;display:grid;place-items:center}
+#scope{flex:0 0 auto;max-width:42%}
 input[type=search]{flex:1 1 auto;min-width:0;border-radius:10px}
 main{max-width:760px;margin:0 auto;padding:16px 18px calc(90px + env(safe-area-inset-bottom))}
 h2{font:700 28px/1.25 Georgia,"Times New Roman",serif;margin:8px 0 14px}
@@ -81,6 +82,7 @@ select.chap{flex:0 0 auto;width:auto;min-width:54px;padding:8px 10px;font-weight
   </div>
   <div class="bar hidden" id="searchBar">
     <input id="q" type="search" placeholder="Suchen, z. B. Liebe oder &quot;im Anfang&quot;" autocomplete="off" spellcheck="false">
+    <select id="scope" aria-label="Suchbereich"><option value="all">Ganze Bibel</option><option value="ot">Altes Testament</option><option value="nt">Neues Testament</option><option value="book">Dieses Buch</option><option value="chap">Dieses Kapitel</option></select>
     <button id="qBtn">Suchen</button>
   </div>
 </header>
@@ -195,9 +197,14 @@ function mark(text,f,ts){var sp=[];ts.forEach(function(t){var i=0;while((i=f.s.i
 var RES=[],shown=0,TS=[];
 function search(){
   var q=$("q").value.trim();if(!q)return;TS=terms(q);if(!TS.length)return;
-  RES=indexFor(st.tr).filter(function(r){return TS.every(function(t){return r[4].s.indexOf(t)>=0;});});
+  var sc=$("scope").value,sb=st.book,scp=st.chap;
+  RES=indexFor(st.tr).filter(function(r){
+    if(sc==="ot"&&r[0]>=39)return false;if(sc==="nt"&&r[0]<39)return false;
+    if(sc==="book"&&r[0]!==sb)return false;if(sc==="chap"&&(r[0]!==sb||r[1]!==scp))return false;
+    return TS.every(function(t){return r[4].s.indexOf(t)>=0;});});
+  var where={all:"der ganzen Bibel",ot:"dem Alten Testament",nt:"dem Neuen Testament",book:BOOKS[sb],chap:BOOKS[sb]+" "+scp}[sc];
   shown=0;st.mode="search";$("pager").classList.add("hidden");
-  $("main").innerHTML='<h2>Suche: '+esc(q)+'</h2><p class="muted">'+RES.length+' Treffer in '+esc(D[st.tr].name)+'</p><div id="results"></div><p><button id="more" class="hidden">Mehr anzeigen</button></p>';
+  $("main").innerHTML='<h2>Suche: '+esc(q)+'</h2><p class="muted">'+RES.length+' Treffer in '+esc(where)+' ('+esc(D[st.tr].name)+')</p><div id="results"></div><p><button id="more" class="hidden">Mehr anzeigen</button></p>';
   more();$("more").onclick=more;window.scrollTo(0,0);
 }
 function more(){var end=Math.min(RES.length,shown+150),h="";
