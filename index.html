@@ -56,6 +56,7 @@ button.pick{flex:1 1 0;min-width:0;text-align:left;font-weight:650;white-space:n
 .grid{overflow:auto;padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
 .grid.books{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
 .grid button{border-radius:10px;padding:10px 6px;text-align:center}
+.filebtn{display:block;text-align:center;padding:14px;border-radius:999px;background:var(--bar);border:1px solid var(--line);font-weight:650}
 .grid .h{grid-column:1/-1;font-size:13px;color:var(--muted);margin-top:6px}
 .text{text-align:left;hyphens:auto;-webkit-hyphens:auto}
 .text .v{display:inline;padding:0}
@@ -90,7 +91,7 @@ select.chap{flex:0 0 auto;width:auto;min-width:54px;padding:8px 10px;font-weight
 </header>
 <div id="sheet" class="sheet hidden"><div class="sheetbox"><div class="sheethead"><strong id="sheetTitle">Buch wählen</strong><button id="sheetClose" class="icon" aria-label="Schließen">✕</button></div><div id="sheetBody" class="grid"></div></div></div>
 <main id="main"></main>
-<input type="file" id="file" accept=".js,.json,text/javascript,application/json" multiple class="hidden">
+<input type="file" id="file" multiple style="position:fixed;left:-9999px;top:0;opacity:0;width:1px;height:1px">
 <div class="pager" id="pager"><div class="bar"><button id="prev">‹ Zurück</button><button id="next">Weiter ›</button></div></div>
 
 <script src="data/elb.js"></script>
@@ -98,6 +99,8 @@ select.chap{flex:0 0 auto;width:auto;min-width:54px;padding:8px 10px;font-weight
 <script src="data/elb32.js"></script>
 <script src="data/slt.js"></script>
 <script>
+(function(){var last=0;document.addEventListener("touchend",function(e){var t=Date.now();if(t-last<350&&e.touches.length===0&&!(e.target.closest&&e.target.closest("select,input,label"))){e.preventDefault();var b=e.target.closest&&e.target.closest("button");if(b)b.click();}last=t;},{passive:false});
+["gesturestart","gesturechange"].forEach(function(n){document.addEventListener(n,function(e){e.preventDefault();});});})();
 "use strict";
 var BOOKS=["1. Mose","2. Mose","3. Mose","4. Mose","5. Mose","Josua","Richter","Ruth","1. Samuel","2. Samuel","1. Könige","2. Könige","1. Chronik","2. Chronik","Esra","Nehemia","Ester","Hiob","Psalmen","Sprüche","Prediger","Hohelied","Jesaja","Jeremia","Klagelieder","Hesekiel","Daniel","Hosea","Joel","Amos","Obadja","Jona","Micha","Nahum","Habakuk","Zefanja","Haggai","Sacharja","Maleachi","Matthäus","Markus","Lukas","Johannes","Apostelgeschichte","Römer","1. Korinther","2. Korinther","Galater","Epheser","Philipper","Kolosser","1. Thessalonicher","2. Thessalonicher","1. Timotheus","2. Timotheus","Titus","Philemon","Hebräer","Jakobus","1. Petrus","2. Petrus","1. Johannes","2. Johannes","3. Johannes","Judas","Offenbarung"];
 var ORDER=["slt","elb","elb32","lut"];
@@ -131,7 +134,7 @@ function trOptions(){
 function parseImport(txt){var i=txt.indexOf("={"),st0=i>=0?i+1:txt.indexOf("{"),j=txt.lastIndexOf("}");
   var o=JSON.parse(txt.slice(st0,j+1));
   if(!o||!o.id||!o.name||!o.books||o.books.length!==66)throw new Error("Format");return o;}
-$("file").onchange=function(){var fs=[].slice.call(this.files),self=this,n=0;
+$("file").onchange=function(){closeSheet();var fs=[].slice.call(this.files),self=this,n=0;
   Promise.all(fs.map(function(f){return f.text().then(function(t){var o=parseImport(t);o._own=true;return idbPut(o.id,o).then(function(){D[o.id]=o;n++;});}).catch(function(){});})).then(function(){
     self.value="";avail=ORDER.filter(function(k){return D[k];}).concat(Object.keys(D).filter(function(k){return ORDER.indexOf(k)<0;}));
     if(n){st.tr=avail.filter(function(k){return D[k]._own;}).pop();}trOptions();
@@ -143,10 +146,13 @@ function fill(){$("selTr").value=st.tr;$("btnBook").textContent=BOOKS[st.book];v
 /* Buch- und Kapitelauswahl */
 function openSheet(){$("sheet").classList.remove("hidden");showBooks();}
 function closeSheet(){$("sheet").classList.add("hidden");}
-function showBooks(){$("sheetTitle").textContent="Buch wählen";
+function showBooks(){$("sheetBody").style.display="";$("sheetTitle").textContent="Buch wählen";
   var h='<div class="h" style="margin-top:0">Altes Testament</div>';
   BOOKS.forEach(function(n,i){if(i===39)h+='<div class="h">Neues Testament</div>';h+='<button data-b="'+i+'">'+esc(n)+'</button>';});
   $("sheetBody").className="grid books";$("sheetBody").innerHTML=h;$("sheetBody").scrollTop=0;}
+function showAdd(){$("sheet").classList.remove("hidden");$("sheetTitle").textContent="Übersetzung hinzufügen";
+  $("sheetBody").className="grid";$("sheetBody").style.display="block";
+  $("sheetBody").innerHTML='<p>Wähle die Bibel-Datei (z. B. <b>slt.js</b> oder <b>elb.js</b>) aus „Dateien“ auf deinem Gerät.</p><label for="file" class="filebtn">Datei auswählen …</label>';}
 $("selChap").onchange=function(){go(st.book,+this.value,null);};
 $("btnBook").onclick=openSheet;$("sheetClose").onclick=closeSheet;
 $("sheet").addEventListener("click",function(e){if(e.target===this){closeSheet();return;}
@@ -158,7 +164,7 @@ function go(b,c,hl){
   render(true);
 }
 $("selTr").onchange=function(){
-  if(this.value===ADD){this.value=st.tr;$("file").click();return;}
+  if(this.value===ADD){this.value=st.tr;showAdd();return;}
   if(this.value===DEL){this.value=st.tr;if(!confirm("Alle importierten Übersetzungen von diesem Gerät entfernen?"))return;
     Promise.all(avail.filter(function(k){return D[k]._own;}).map(function(k){delete D[k];return idbDel(k);})).then(function(){
       avail=avail.filter(function(k){return D[k];});st.tr=avail[0];trOptions();go(st.book,st.chap,null);});return;}
