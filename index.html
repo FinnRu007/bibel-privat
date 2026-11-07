@@ -112,7 +112,7 @@ var BOOKS=["1. Mose","2. Mose","3. Mose","4. Mose","5. Mose","Josua","Richter","
 var ORDER=["slt","elb","elb32","lut","men","tyn","kjv","lut45","elb05","neue"];
 var D=window.BIBLE_DATA=window.BIBLE_DATA||{};
 var avail=[];
-var NAMES={slt:"Schlachter 2000",elb:"Elberfelder 1985",elb32:"Elberfelder 1932",elb05:"Elberfelder 1905",lut:"Luther 1912",lut45:"Luther 1545",men:"Menge 1939",neue:"Neue evangelistische Übersetzung (NeÜ)",kjv:"King James 1611 (englisch)",tyn:"Tyndale (englisch)"};
+var NAMES={slt:"Schlachter 2000",elb:"Elberfelder 1985",elb32:"Elberfelder 1932",elb05:"Elberfelder 1905",lut:"Luther 1912",lut45:"Luther 1545",men:"Menge 1939",neue:"Neue evangelistische Übersetzung (NeÜ)",kjv:"King James 1611 (englisch)",tyn:"Tyndale (englisch, teilweise)"};
 function mkAvail(){Object.keys(NAMES).forEach(function(k){if(D[k])D[k].name=NAMES[k];});
   return Object.keys(D).sort(function(a,b){return D[a].name.localeCompare(D[b].name,"de",{numeric:true});});}
 /* Eigene Übersetzungen (Import) liegen nur auf diesem Gerät in IndexedDB */
