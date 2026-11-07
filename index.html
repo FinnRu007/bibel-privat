@@ -27,7 +27,7 @@ input[type=search]{flex:1 1 auto;min-width:0;border-radius:10px}
 main{max-width:760px;margin:0 auto;padding:16px 18px calc(90px + env(safe-area-inset-bottom))}
 h2{font:700 28px/1.25 Georgia,"Times New Roman",serif;margin:8px 0 14px}
 .text{font:22px/1.75 Georgia,"Times New Roman",serif}
-.text p{margin:0 0 .2em}
+.text p{margin:0 0 .9em}
 .text .v{padding:1px 0}
 .text .n{font:600 .55em system-ui,sans-serif;color:var(--muted);vertical-align:super;margin-right:.35em}
 .text .v.hl{background:var(--hl);border-radius:4px;box-shadow:-6px 0 0 var(--hl),6px 0 0 var(--hl)}
@@ -172,7 +172,7 @@ function render(scroll){
   var h='<h2>'+esc(BOOKS[st.book])+' '+st.chap+'</h2><div class="text"><p>';
   vs.forEach(function(v){
     var hl=st.hl&&v[0]>=st.hl[0]&&v[0]<=st.hl[1];
-    h+='<span class="v'+(hl?" hl":"")+'" id="v'+v[0]+'"><span class="n">'+v[0]+'</span>'+esc(v[1])+'</span> ';
+    h+='<span class="v'+(hl?" hl":"")+'" id="v'+v[0]+'"><span class="n">'+v[0]+'</span>'+esc(v[1])+'</span> '+(v[3]?'</p><p>':'');
   });
   if(!vs.length)h+='<span class="muted">In dieser Übersetzung ist dieses Kapitel nicht vorhanden.</span>';
   $("main").innerHTML=h+'</p></div>';
