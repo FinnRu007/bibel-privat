@@ -43,7 +43,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .pager .bar{justify-content:space-between}
 .pager button{flex:1}
 label.sw{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted);flex:0 0 auto}
-select.small{flex:0 0 auto;width:auto;max-width:6.6em;padding:6px 6px;font-size:13px}
+select.small{flex:1 1 0;min-width:0;width:auto;padding:7px 12px;font-size:14px}
 button.pick{flex:1 1 0;min-width:0;text-align:left;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:8px 12px;font-size:15px}
 .sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
 .sheetbox{background:var(--bg);width:100%;max-width:760px;max-height:88vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;border:1px solid var(--line)}
@@ -57,7 +57,7 @@ button.pick{flex:1 1 0;min-width:0;text-align:left;font-weight:650;white-space:n
 .text{text-align:left;hyphens:auto;-webkit-hyphens:auto}
 .text .v{display:inline;padding:0}
 .text .v.hl{box-shadow:none}
-button.chap{flex:0 0 auto;min-width:46px;padding:8px 8px;font-weight:650;font-size:15px}
+select.chap{flex:0 0 auto;width:auto;min-width:54px;padding:8px 10px;font-weight:650;font-size:15px}
 .wheelwrap{position:relative;padding:12px 12px calc(14px + env(safe-area-inset-bottom));display:block;overflow:visible}
 .wheel{height:220px;overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;text-align:center}
 .wheel::-webkit-scrollbar{display:none}
@@ -72,17 +72,19 @@ button.chap{flex:0 0 auto;min-width:46px;padding:8px 8px;font-weight:650;font-si
 <header id="hdr">
   <div class="bar">
     <select id="selTr" class="small" aria-label="Übersetzung"></select>
-    <button id="btnBook" class="pick" aria-label="Buch wählen"></button>
-    <button id="btnChap" class="chap" aria-label="Kapitel wählen"></button>
     <button id="btnSearch" class="icon" aria-label="Suche">🔍</button>
     <button id="btnTheme" class="icon" aria-label="Hell/Dunkel">◐</button>
+  </div>
+  <div class="bar">
+    <button id="btnBook" class="pick" aria-label="Buch wählen"></button>
+    <select id="selChap" class="chap" aria-label="Kapitel"></select>
   </div>
   <div class="bar hidden" id="searchBar">
     <input id="q" type="search" placeholder="Suchen, z. B. Liebe oder &quot;im Anfang&quot;" autocomplete="off" spellcheck="false">
     <button id="qBtn">Suchen</button>
   </div>
 </header>
-<div id="sheet" class="sheet hidden"><div class="sheetbox"><div class="sheethead"><button id="sheetBack" class="icon hidden" aria-label="Zurück">‹</button><strong id="sheetTitle">Buch wählen</strong><button id="sheetClose" class="icon" aria-label="Schließen">✕</button></div><div id="sheetBody" class="grid"></div></div></div>
+<div id="sheet" class="sheet hidden"><div class="sheetbox"><div class="sheethead"><strong id="sheetTitle">Buch wählen</strong><button id="sheetClose" class="icon" aria-label="Schließen">✕</button></div><div id="sheetBody" class="grid"></div></div></div>
 <main id="main"></main>
 <input type="file" id="file" accept=".js,.json,text/javascript,application/json" multiple class="hidden">
 <div class="pager" id="pager"><div class="bar"><button id="prev">‹ Zurück</button><button id="next">Weiter ›</button></div></div>
@@ -120,7 +122,7 @@ $("btnTheme").onclick=function(){theme=theme==="dark"?"light":"dark";put("theme"
 /* Auswahl */
 var ADD="__add",DEL="__del";
 function trOptions(){
-  $("selTr").innerHTML=avail.map(function(k){return '<option value="'+k+'">'+esc(D[k].short||D[k].name)+'</option>';}).join("")+
+  $("selTr").innerHTML=avail.map(function(k){return '<option value="'+k+'">'+esc(D[k].name)+'</option>';}).join("")+
    '<option value="'+ADD+'">＋ Übersetzung hinzufügen …</option>'+(avail.some(function(k){return D[k]._own;})?'<option value="'+DEL+'">－ Importierte entfernen</option>':'');}
 function parseImport(txt){var i=txt.indexOf("={"),st0=i>=0?i+1:txt.indexOf("{"),j=txt.lastIndexOf("}");
   var o=JSON.parse(txt.slice(st0,j+1));
@@ -133,29 +135,19 @@ $("file").onchange=function(){var fs=[].slice.call(this.files),self=this,n=0;
 function restore(){var saved=get("pos",""); if(saved){try{var p=JSON.parse(saved);if(D[p.tr])st.tr=p.tr;if(p.book>=0&&p.book<66){st.book=p.book;st.chap=p.chap||1;}}catch(e){}}}
 
 function chapters(b){return D[st.tr].books[b].length;}
-function fill(){$("selTr").value=st.tr;$("btnBook").textContent=BOOKS[st.book];$("btnChap").textContent=st.chap;}
+function fill(){$("selTr").value=st.tr;$("btnBook").textContent=BOOKS[st.book];var n=chapters(st.book),h="";for(var i=1;i<=n;i++)h+='<option value="'+i+'">'+i+'</option>';$("selChap").innerHTML=h;$("selChap").value=st.chap;}
 /* Buch- und Kapitelauswahl */
 function openSheet(){$("sheet").classList.remove("hidden");showBooks();}
 function closeSheet(){$("sheet").classList.add("hidden");}
-function showBooks(){$("sheetTitle").textContent="Buch wählen";$("sheetBack").classList.add("hidden");
+function showBooks(){$("sheetTitle").textContent="Buch wählen";
   var h='<div class="h" style="margin-top:0">Altes Testament</div>';
   BOOKS.forEach(function(n,i){if(i===39)h+='<div class="h">Neues Testament</div>';h+='<button data-b="'+i+'">'+esc(n)+'</button>';});
   $("sheetBody").className="grid books";$("sheetBody").innerHTML=h;$("sheetBody").scrollTop=0;}
-function showChaps(b){$("sheetTitle").textContent=BOOKS[b]+" – Kapitel";$("sheetBack").classList.remove("hidden");
-  var n=chapters(b),h='<div class="wheel" id="wheel"><div class="pad"></div>';
-  for(var i=1;i<=n;i++)h+='<div class="it" data-i="'+(i-1)+'">'+i+'</div>';
-  h+='<div class="pad"></div></div><div class="band"></div><button class="ok" id="wheelOk">Öffnen</button>';
-  var body=$("sheetBody");body.className="wheelwrap";body.innerHTML=h;
-  var w=$("wheel"),items=w.querySelectorAll(".it"),sel=(b===st.book?st.chap:1)-1;
-  function mark(){var k=Math.min(n-1,Math.max(0,Math.round(w.scrollTop/44)));if(k!==sel||!w._m){sel=k;w._m=1;items.forEach(function(e,j){e.classList.toggle("sel",j===k);});}}
-  w.style.scrollSnapType="none";w.scrollTop=sel*44;mark();setTimeout(function(){w.style.scrollSnapType="";},50);
-  w.addEventListener("scroll",mark);
-  w.addEventListener("click",function(e){var it=e.target.closest(".it");if(it)w.scrollTo({top:+it.dataset.i*44,behavior:"smooth"});});
-  $("wheelOk").onclick=function(){closeSheet();go(b,sel+1,null);};}
-$("btnChap").onclick=function(){$("sheet").classList.remove("hidden");showChaps(st.book);};
-$("btnBook").onclick=openSheet;$("sheetClose").onclick=closeSheet;$("sheetBack").onclick=showBooks;
+$("selChap").onchange=function(){go(st.book,+this.value,null);};
+$("btnBook").onclick=openSheet;$("sheetClose").onclick=closeSheet;
 $("sheet").addEventListener("click",function(e){if(e.target===this){closeSheet();return;}
-  var t=e.target.closest&&e.target.closest("button[data-b]");if(t)showChaps(+t.dataset.b);});
+  var t=e.target.closest&&e.target.closest("button[data-b]");if(!t)return;
+  closeSheet();go(+t.dataset.b,1,null);var sc=$("selChap");try{if(sc.showPicker)sc.showPicker();else sc.focus();}catch(x){}});
 function go(b,c,hl){
   st.book=b;st.chap=Math.min(Math.max(1,c),chapters(b));st.hl=hl||null;st.mode="read";
   put("pos",JSON.stringify({tr:st.tr,book:st.book,chap:st.chap}));
