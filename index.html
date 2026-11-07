@@ -43,27 +43,39 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .pager .bar{justify-content:space-between}
 .pager button{flex:1}
 label.sw{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted);flex:0 0 auto}
+select.small{flex:0 0 auto;width:auto;max-width:7.5em;padding:6px 8px;font-size:13px}
+button.pick{flex:1 1 0;min-width:0;text-align:left;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:8px 12px;font-size:15px}
+.sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheetbox{background:var(--bg);width:100%;max-width:760px;max-height:88vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;border:1px solid var(--line)}
+.sheethead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.sheethead strong{flex:1;text-align:center}
+.sheethead .icon.hidden{display:block!important;visibility:hidden}
+.grid{overflow:auto;padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.grid.books{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+.grid button{border-radius:10px;padding:10px 6px;text-align:center}
+.grid .h{grid-column:1/-1;font-size:13px;color:var(--muted);margin-top:6px}
+.text{text-align:left;hyphens:auto;-webkit-hyphens:auto}
+.text .v{display:inline;padding:0}
+.text .v.hl{box-shadow:none}
 </style>
 </head>
 <body>
 <header id="hdr">
   <div class="bar">
-    <select id="selTr" aria-label="Übersetzung"></select>
+    <select id="selTr" class="small" aria-label="Übersetzung"></select>
+    <button id="btnBook" class="pick" aria-label="Buch und Kapitel wählen"></button>
     <button id="btnSearch" class="icon" aria-label="Suche">🔍</button>
     <button id="btnTheme" class="icon" aria-label="Hell/Dunkel">◐</button>
-  </div>
-  <div class="bar">
-    <select id="selBook" aria-label="Buch"></select>
-    <select id="selChap" aria-label="Kapitel"></select>
   </div>
   <div class="bar hidden" id="searchBar">
     <input id="q" type="search" placeholder="Suchen, z. B. Liebe oder &quot;im Anfang&quot;" autocomplete="off" spellcheck="false">
     <button id="qBtn">Suchen</button>
   </div>
 </header>
+<div id="sheet" class="sheet hidden"><div class="sheetbox"><div class="sheethead"><button id="sheetBack" class="icon hidden" aria-label="Zurück">‹</button><strong id="sheetTitle">Buch wählen</strong><button id="sheetClose" class="icon" aria-label="Schließen">✕</button></div><div id="sheetBody" class="grid"></div></div></div>
 <main id="main"></main>
 <input type="file" id="file" accept=".js,.json,text/javascript,application/json" multiple class="hidden">
-<div class="pager" id="pager"><div class="bar"><button id="prev">‹ Zurück</button><label class="sw"><input type="checkbox" id="optNotes"> Anmerkungen</label><button id="next">Weiter ›</button></div></div>
+<div class="pager" id="pager"><div class="bar"><button id="prev">‹ Zurück</button><button id="next">Weiter ›</button></div></div>
 
 <script src="data/elb.js"></script>
 <script src="data/lut.js"></script>
@@ -98,7 +110,7 @@ $("btnTheme").onclick=function(){theme=theme==="dark"?"light":"dark";put("theme"
 /* Auswahl */
 var ADD="__add",DEL="__del";
 function trOptions(){
-  $("selTr").innerHTML=avail.map(function(k){return '<option value="'+k+'">'+esc(D[k].name)+'</option>';}).join("")+
+  $("selTr").innerHTML=avail.map(function(k){return '<option value="'+k+'">'+esc(D[k].short||D[k].name)+'</option>';}).join("")+
    '<option value="'+ADD+'">＋ Übersetzung hinzufügen …</option>'+(avail.some(function(k){return D[k]._own;})?'<option value="'+DEL+'">－ Importierte entfernen</option>':'');}
 function parseImport(txt){var i=txt.indexOf("={"),st0=i>=0?i+1:txt.indexOf("{"),j=txt.lastIndexOf("}");
   var o=JSON.parse(txt.slice(st0,j+1));
@@ -108,17 +120,24 @@ $("file").onchange=function(){var fs=[].slice.call(this.files),self=this,n=0;
     self.value="";avail=ORDER.filter(function(k){return D[k];}).concat(Object.keys(D).filter(function(k){return ORDER.indexOf(k)<0;}));
     if(n){st.tr=avail.filter(function(k){return D[k]._own;}).pop();}trOptions();
     if(n)go(st.book,st.chap,null);else{alert("Datei konnte nicht gelesen werden. Es muss eine Bibel-Datei dieser App sein (z. B. slt.js).");$("selTr").value=st.tr;}});};
-$("selBook").innerHTML=BOOKS.map(function(n,i){return '<option value="'+i+'">'+n+'</option>';}).join("");
 function restore(){var saved=get("pos",""); if(saved){try{var p=JSON.parse(saved);if(D[p.tr])st.tr=p.tr;if(p.book>=0&&p.book<66){st.book=p.book;st.chap=p.chap||1;}}catch(e){}}}
-$("optNotes").checked=get("notes","0")==="1";
-$("optNotes").onchange=function(){put("notes",this.checked?"1":"0");if(st.mode==="read")render(false);};
 
 function chapters(b){return D[st.tr].books[b].length;}
-function fill(){
-  var n=chapters(st.book),h="";
-  for(var i=1;i<=n;i++)h+='<option value="'+i+'">Kapitel '+i+'</option>';
-  $("selChap").innerHTML=h; $("selTr").value=st.tr; $("selBook").value=st.book; $("selChap").value=st.chap;
-}
+function fill(){$("selTr").value=st.tr;$("btnBook").textContent=BOOKS[st.book]+" "+st.chap+"  ▾";}
+/* Buch- und Kapitelauswahl */
+function openSheet(){$("sheet").classList.remove("hidden");showBooks();}
+function closeSheet(){$("sheet").classList.add("hidden");}
+function showBooks(){$("sheetTitle").textContent="Buch wählen";$("sheetBack").classList.add("hidden");
+  var h='<div class="h" style="margin-top:0">Altes Testament</div>';
+  BOOKS.forEach(function(n,i){if(i===39)h+='<div class="h">Neues Testament</div>';h+='<button data-b="'+i+'">'+esc(n)+'</button>';});
+  $("sheetBody").className="grid books";$("sheetBody").innerHTML=h;$("sheetBody").scrollTop=0;}
+function showChaps(b){$("sheetTitle").textContent=BOOKS[b];$("sheetBack").classList.remove("hidden");$("sheetBack").dataset.b=b;
+  var n=chapters(b),h="";for(var i=1;i<=n;i++)h+='<button data-b="'+b+'" data-c="'+i+'">'+i+'</button>';
+  $("sheetBody").className="grid";$("sheetBody").innerHTML=h;$("sheetBody").scrollTop=0;}
+$("btnBook").onclick=openSheet;$("sheetClose").onclick=closeSheet;$("sheetBack").onclick=showBooks;
+$("sheet").addEventListener("click",function(e){if(e.target===this){closeSheet();return;}
+  var t=e.target.closest&&e.target.closest("button[data-b]");if(!t)return;
+  if(t.dataset.c){closeSheet();go(+t.dataset.b,+t.dataset.c,null);}else showChaps(+t.dataset.b);});
 function go(b,c,hl){
   st.book=b;st.chap=Math.min(Math.max(1,c),chapters(b));st.hl=hl||null;st.mode="read";
   put("pos",JSON.stringify({tr:st.tr,book:st.book,chap:st.chap}));
@@ -130,8 +149,6 @@ $("selTr").onchange=function(){
     Promise.all(avail.filter(function(k){return D[k]._own;}).map(function(k){delete D[k];return idbDel(k);})).then(function(){
       avail=avail.filter(function(k){return D[k];});st.tr=avail[0];trOptions();go(st.book,st.chap,null);});return;}
   st.tr=this.value;go(st.book,st.chap,null);};
-$("selBook").onchange=function(){go(+this.value,1,null);};
-$("selChap").onchange=function(){go(st.book,+this.value,null);};
 function step(d){var b=st.book,c=st.chap+d;
   if(c<1){if(b===0)return;b--;c=chapters(b);}
   else if(c>chapters(b)){if(b===65)return;b++;c=1;}
@@ -141,17 +158,14 @@ $("next").onclick=function(){step(1);};
 
 function render(scroll){
   $("pager").classList.remove("hidden"); fill();
-  var tr=D[st.tr], vs=tr.books[st.book][st.chap-1]||[], notes=$("optNotes").checked;
-  var h='<h2>'+esc(BOOKS[st.book])+' '+st.chap+'</h2>';
-  if(tr.note)h+='<div class="warn">'+esc(tr.note)+'</div>';
-  h+='<div class="text">';
+  var tr=D[st.tr], vs=tr.books[st.book][st.chap-1]||[];
+  var h='<h2>'+esc(BOOKS[st.book])+' '+st.chap+'</h2><div class="text"><p>';
   vs.forEach(function(v){
     var hl=st.hl&&v[0]>=st.hl[0]&&v[0]<=st.hl[1];
-    h+='<p class="v'+(hl?" hl":"")+'" id="v'+v[0]+'"><span class="n">'+v[0]+'</span>'+esc(v[1])+'</p>';
-    if(notes&&v[2])h+='<span class="note">'+esc(v[2])+'</span>';
+    h+='<span class="v'+(hl?" hl":"")+'" id="v'+v[0]+'"><span class="n">'+v[0]+'</span>'+esc(v[1])+'</span> ';
   });
-  if(!vs.length)h+='<p class="muted">In dieser Übersetzung ist dieses Kapitel nicht vorhanden.</p>';
-  $("main").innerHTML=h+'</div>';
+  if(!vs.length)h+='<span class="muted">In dieser Übersetzung ist dieses Kapitel nicht vorhanden.</span>';
+  $("main").innerHTML=h+'</p></div>';
   if(scroll){var el=st.hl&&$("v"+st.hl[0]);if(el)setTimeout(function(){el.scrollIntoView({block:"center"});},0);else window.scrollTo(0,0);}
 }
 
