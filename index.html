@@ -98,13 +98,14 @@ select.chap{flex:0 0 auto;width:auto;min-width:54px;padding:8px 10px;font-weight
 <script src="data/lut.js"></script>
 <script src="data/elb32.js"></script>
 <script src="data/men.js"></script>
+<script src="data/tyn.js"></script>
 <script src="data/slt.js"></script>
 <script>
 (function(){var last=0;document.addEventListener("touchend",function(e){var t=Date.now();if(t-last<350&&e.touches.length===0&&!(e.target.closest&&e.target.closest("select,input,label"))){e.preventDefault();var b=e.target.closest&&e.target.closest("button");if(b)b.click();}last=t;},{passive:false});
 ["gesturestart","gesturechange"].forEach(function(n){document.addEventListener(n,function(e){e.preventDefault();});});})();
 "use strict";
 var BOOKS=["1. Mose","2. Mose","3. Mose","4. Mose","5. Mose","Josua","Richter","Ruth","1. Samuel","2. Samuel","1. Könige","2. Könige","1. Chronik","2. Chronik","Esra","Nehemia","Ester","Hiob","Psalmen","Sprüche","Prediger","Hohelied","Jesaja","Jeremia","Klagelieder","Hesekiel","Daniel","Hosea","Joel","Amos","Obadja","Jona","Micha","Nahum","Habakuk","Zefanja","Haggai","Sacharja","Maleachi","Matthäus","Markus","Lukas","Johannes","Apostelgeschichte","Römer","1. Korinther","2. Korinther","Galater","Epheser","Philipper","Kolosser","1. Thessalonicher","2. Thessalonicher","1. Timotheus","2. Timotheus","Titus","Philemon","Hebräer","Jakobus","1. Petrus","2. Petrus","1. Johannes","2. Johannes","3. Johannes","Judas","Offenbarung"];
-var ORDER=["slt","elb","elb32","lut","men"];
+var ORDER=["slt","elb","elb32","lut","men","tyn"];
 var D=window.BIBLE_DATA=window.BIBLE_DATA||{};
 var avail=[];
 /* Eigene Übersetzungen (Import) liegen nur auf diesem Gerät in IndexedDB */
